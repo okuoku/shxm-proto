@@ -24,7 +24,7 @@ int
 main(int ac, char** av){
     char* src;
     shxm_init();
-    src = readfile(SOURCEPATH "/physpre.frag");
+    src = readfile(SOURCEPATH "/phys.frag");
     shxm_build(0 /* frag */, src);
     shxm_deinit();
 }

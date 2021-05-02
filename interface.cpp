@@ -38,10 +38,12 @@ shxm_build(int mode, const char* source){
     // ts->setInvertY(true);
     ts->setEnvInput(glslang::EShSourceGlsl,
                     (mode == 0)?EShLangFragment : EShLangVertex,
-                    glslang::EShClientVulkan,
+                    glslang::EShClientOpenGL,
                     100);
+    /*
     ts->setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_0);
     ts->setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_0);
+    */
 
     if(ts->parse(&glslang::DefaultTBuiltInResource,
                  100,
