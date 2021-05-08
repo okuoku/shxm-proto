@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #include "shxm.h"
+#include "shxm_private.h"
 
 static void*
 readfile(const char* fn, size_t* out_size){
@@ -44,6 +45,11 @@ main(int ac, char** av){
     prog = shxm_program_create(ctx);
     shxm_program_attach(ctx, prog, shf);
     shxm_program_attach(ctx, prog, shv);
+
+    printf("== PreLink ==\n");
+    printf("Fsize = %d, Vsize = %d\n", 
+           shf->ir_len,
+           shv->ir_len);
 
     return 0;
 }
