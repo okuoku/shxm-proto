@@ -63,6 +63,13 @@ shxm_build(int mode, const char* source){
                               &opt);
         printf("%s\n", logger.getAllMessages().c_str());
         spv::Disassemble(std::cout, spirv);
+        // Override version
+        spirv[1] = 0x10500; // SPIR-V 1.5
+        if(mode == 0){
+            glslang::OutputSpvBin(spirv, "out.frag.spv");
+        }else{
+            glslang::OutputSpvBin(spirv, "out.vert.spv");
+        }
     }else{
         printf("Fail.\n%s\n%s\n",
                ts->getInfoLog(),
