@@ -3,22 +3,26 @@
 #include "SPIRV/disassemble.h"
 #include <iostream>
 
+#include <stdlib.h>
+
 namespace glslang {
     extern TBuiltInResource DefaultTBuiltInResource;
 };
 
 extern "C" void
-shxm_init(void){
+shxm_glslang_init(void){
     (void)glslang::InitializeProcess();
 }
 
 extern "C" void
-shxm_deinit(void){
+shxm_glslang_deinit(void){
     (void)glslang::FinalizeProcess();
 }
 
-extern "C" void*
-shxm_build(int mode, const char* source){
+extern "C" int
+shxm_glslang_build(int mode, const char* source, 
+                   int** out_spv, int* out_spvlen){
+    int ret;
     glslang::TShader::ForbidIncluder includer;
     glslang::TShader* ts;
     switch(mode){
@@ -29,7 +33,7 @@ shxm_build(int mode, const char* source){
             ts = new glslang::TShader(EShLangVertex);
             break;
         default:
-            return 0;
+            return 1;
     }
 
     ts->setStrings(&source, 1);
@@ -64,23 +68,43 @@ shxm_build(int mode, const char* source){
         printf("%s\n", logger.getAllMessages().c_str());
         spv::Disassemble(std::cout, spirv);
         // Override version
-        spirv[1] = 0x10500; // SPIR-V 1.5
+        spirv[1] = 0x10300; // SPIR-V 1.3
+        {
+            // Output
+            int* out;
+            size_t siz;
+            ret = 0;
+            siz = spirv.size();
+            out = (int*)malloc(sizeof(int)*siz);
+            if(! out){
+                ret = -1;
+            }else{
+                for(int i=0;i!=siz;i++){
+                    out[i] = spirv[i];
+                }
+                if(out_spv){
+                    *out_spv = out;
+                }
+                if(out_spvlen){
+                    *out_spvlen = (int)siz;
+                }
+            }
+        }
+#if 0
         if(mode == 0){
             glslang::OutputSpvBin(spirv, "out.frag.spv");
         }else{
             glslang::OutputSpvBin(spirv, "out.vert.spv");
         }
+#endif
     }else{
+        ret = 1;
         printf("Fail.\n%s\n%s\n",
                ts->getInfoLog(),
                ts->getInfoDebugLog());
     }
 
-
-
-    return static_cast<void*>(ts);
+    delete ts;
+    return ret;
 }
 
-extern "C" void
-shxm_release(void* obj){
-}

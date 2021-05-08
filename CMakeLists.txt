@@ -16,6 +16,7 @@ add_executable(check
     glslang/StandAlone/resource_limits_c.cpp
     # main
     shxm_glslang_interface.cpp
+    shxm_obj.c
     driver.c
     )
 

@@ -1,10 +1,16 @@
 #ifndef __YUNI_SHXM_PRIVATE_H
 #define __YUNI_SHXM_PRIVATE_H
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 // }
+
+struct shxm_ctx_s {
+    int dummy;
+};
 
 struct shxm_slot_s {
     cwgl_var_type_t type;
@@ -36,9 +42,9 @@ typedef struct shxm_varying_s shxm_varying_t;
 struct shxm_shader_s {
     int refcnt;
     shxm_shader_stage_t type;
-    const char* source; /* GLSL Source */
+    char* source; /* GLSL Source */
     unsigned int source_len;
-    const uint32_t* ir; /* SPIR-V IR (Unpatched) */
+    uint32_t* ir; /* SPIR-V IR (Unpatched) */
     unsigned int ir_len;
 };
 typedef struct shxm_shader_s shxm_shader_t;

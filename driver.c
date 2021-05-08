@@ -1,12 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void shxm_init(void);
-void shxm_deinit(void);
-void* shxm_build(int mode, const char* source);
+#include "shxm.h"
 
 static void*
-readfile(const char* fn){
+readfile(const char* fn, size_t* out_size){
     FILE* fp;
     size_t sz;
     char* r;
@@ -17,14 +15,35 @@ readfile(const char* fn){
     r = malloc(sz+1);
     r[sz] = 0;
     fread(r, sz, 1, fp);
+    *out_size = sz+1;
     return r;
 }
 
 int
 main(int ac, char** av){
     char* src;
-    shxm_init();
-    src = readfile(SOURCEPATH "/phys.frag");
-    shxm_build(0 /* frag */, src);
-    shxm_deinit();
+    size_t len;
+    shxm_ctx_t* ctx;
+    shxm_shader_t* shf;
+    shxm_shader_t* shv;
+    shxm_program_t* prog;
+
+    ctx = shxm_init();
+    shf = shxm_shader_create(ctx, SHXM_SHADER_STAGE_FRAGMENT);
+    shv = shxm_shader_create(ctx, SHXM_SHADER_STAGE_VERTEX);
+    src = readfile(SOURCEPATH "/phys.frag", &len);
+    shxm_shader_source(ctx, shf, src, len);
+    src = readfile(SOURCEPATH "/phys.vert", &len);
+    shxm_shader_source(ctx, shv, src, len);
+
+    printf("== FRAG ==\n");
+    shxm_shader_compile(ctx, shf);
+    printf("== VERT ==\n");
+    shxm_shader_compile(ctx, shv);
+
+    prog = shxm_program_create(ctx);
+    shxm_program_attach(ctx, prog, shf);
+    shxm_program_attach(ctx, prog, shv);
+
+    return 0;
 }

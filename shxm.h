@@ -46,25 +46,29 @@ enum shxm_shader_stage_e {
 };
 typedef enum shxm_shader_stage_e shxm_shader_stage_t;
 
+struct shxm_ctx_s;
 struct shxm_shader_s;
 struct shxm_program_s;
+typedef struct shxm_ctx_s shxm_ctx_t;
 typedef struct shxm_shader_s shxm_shader_t;
 typedef struct shxm_program_s shxm_program_t;
 
-SHXM_API shxm_shader_t* shxm_shader_create(shxm_shader_stage_t type);
-SHXM_API void shxm_shader_release(shxm_shader_t* sh);
-SHXM_API shxm_program_t* shxm_program_create(void);
-SHXM_API void shxm_program_release(shxm_program_t* prog);
+SHXM_API shxm_ctx_t* shxm_init(void);
 
-SHXM_API void shxm_shader_source(shxm_shader_t* sh,
+SHXM_API shxm_shader_t* shxm_shader_create(shxm_ctx_t* ctx, shxm_shader_stage_t type);
+SHXM_API void shxm_shader_release(shxm_ctx_t* ctx, shxm_shader_t* sh);
+SHXM_API shxm_program_t* shxm_program_create(shxm_ctx_t* ctx);
+SHXM_API void shxm_program_release(shxm_ctx_t* ctx, shxm_program_t* prog);
+
+SHXM_API void shxm_shader_source(shxm_ctx_t* ctx, shxm_shader_t* sh,
                                  const char* src /* Copied */,
                                  unsigned int len);
-SHXM_API int shxm_shader_compile(shxm_shader_t* sh);
+SHXM_API int shxm_shader_compile(shxm_ctx_t* ctx, shxm_shader_t* sh);
 
-SHXM_API void shxm_program_attach(shxm_program_t* prog, shxm_shader_t* sh);
-SHXM_API int shxm_program_detach(shxm_program_t* prog, shxm_shader_t* sh);
+SHXM_API void shxm_program_attach(shxm_ctx_t* ctx, shxm_program_t* prog, shxm_shader_t* sh);
+SHXM_API int shxm_program_detach(shxm_ctx_t* ctx, shxm_program_t* prog, shxm_shader_t* sh);
 
-SHXM_API int shxm_program_link(shxm_program_t* prog);
+SHXM_API int shxm_program_link(shxm_ctx_t* ctx, shxm_program_t* prog);
 
 
 // {
