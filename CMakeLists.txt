@@ -17,6 +17,8 @@ add_executable(check
     # main
     shxm_glslang.cpp
     shxm_obj.c
+    shxm_linker.c
+    shxm_spirv_reader.c
     driver.c
     )
 

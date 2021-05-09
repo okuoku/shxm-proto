@@ -74,6 +74,18 @@ struct shxm_program_s {
     unsigned int fragment_ir_len;
 };
 
+struct shxm_spirv_ent_s {
+    int offs;
+    int op;
+    int type;
+    int name;
+    char* str;
+};
+
+typedef struct shxm_spirv_ent_s shxm_spirv_ent_t;
+
+shxm_spirv_ent_t* shxm_private_read_spirv(uint32_t* ir, int len, 
+                                          int* out_count);
 
 // {
 #ifdef __cplusplus

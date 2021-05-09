@@ -50,6 +50,7 @@ main(int ac, char** av){
     printf("Fsize = %d, Vsize = %d\n", 
            shf->ir_len,
            shv->ir_len);
+    shxm_program_link(ctx, prog);
 
     return 0;
 }

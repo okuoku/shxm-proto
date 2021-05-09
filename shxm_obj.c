@@ -132,10 +132,3 @@ shxm_program_detach(shxm_ctx_t* ctx, shxm_program_t* prog, shxm_shader_t* sh){
     shxm_shader_release(ctx, sh);
     return 0;
 }
-
-SHXM_API int 
-shxm_program_link(shxm_ctx_t* ctx, shxm_program_t* prog){
-    // FIXME: Implement it
-    return 0;
-}
-
