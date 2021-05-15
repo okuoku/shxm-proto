@@ -4,9 +4,23 @@
 #include <stdio.h>
 #include <string.h>
 
-shxm_spirv_ent_t* 
-shxm_private_read_spirv(uint32_t* ir, int len, int* out_count){
+static shxm_spirv_ent_t*
+calc_ent(shxm_spirv_intr_t* intr, int id){
+    if(id < intr->ent_count){
+        return &intr->ent[id];
+    }else{
+        printf("!!! Invalid id offset!(%d)\n", id);
+        return NULL;
+    }
+}
+
+shxm_spirv_intr_t* 
+shxm_private_read_spirv(uint32_t* ir, int len){
+    shxm_spirv_intr_t* intr;
     shxm_spirv_ent_t* ent;
+    shxm_spirv_ent_t* ment;
+    int failed = 0;
+    int prev;
     uint32_t magic;
     uint32_t version;
     uint32_t bound;
@@ -16,7 +30,7 @@ shxm_private_read_spirv(uint32_t* ir, int len, int* out_count){
     int i;
     if(len < 5){
         printf("ERROR: Too short(%d)\n", len);
-        return 0;
+        return NULL;
     }
 
     magic = ir[0];
@@ -27,23 +41,104 @@ shxm_private_read_spirv(uint32_t* ir, int len, int* out_count){
     printf("Reading: magic = %x version = %x bound = %d zero = %d\n",
            magic, version, bound, zero);
 
+    intr = malloc(sizeof(shxm_spirv_intr_t));
+    if(! intr){
+        return NULL;
+    }
+    intr->chain = malloc(sizeof(unsigned int)*len);
+    if(! intr->chain){
+        free(intr);
+        return NULL;
+    }
     ent = malloc(sizeof(shxm_spirv_ent_t)*bound);
     if(ent){
+        intr->ent = ent;
+        intr->ent_count = bound;
         memset(ent, 0, sizeof(shxm_spirv_ent_t*)*bound);
+        memset(intr->chain, 0, sizeof(unsigned int)*len);
         i = 5;
         while(i<len){
             oplen = (ir[i]) >> 16;
             op = (ir[i]) & 0xffff;
-            printf("[%d] op = %d len = %d(%d)\n", i, op, oplen,len);
+            //printf("[%d] op = %d len = %d(%d)\n", i, op, oplen,len);
             if(oplen == 0){
                 break;
             }
+            switch(op){
+                /* Names */
+                case 5: /* OpName */
+                    ment = calc_ent(intr, ir[i+1]);
+                    if(! ment){
+                        failed = 1;
+                    }else{
+                        ment->name = i;
+                    }
+                    break;
+                case 6: /* OpMemberName */
+                    printf("!!! FIXME !!! OpMemberName.!\n");
+                    break;
+
+                /* Types */
+                case 19: /* OpTypeVoid */
+                case 21: /* OpTypeInt */
+                case 22: /* OpTypeFloat */
+                case 23: /* OpTypeVector */
+                case 24: /* OpTypeMatrix */
+                case 25: /* OpTypeImage */
+                case 26: /* OpTypeSampler */
+                case 27: /* OpTypeSampledImage */
+                case 32: /* OpTypePointer */
+                case 33: /* OpTypeFunction */
+                    ment = calc_ent(intr, ir[i+1]);
+                    if(! ment){
+                        printf("ERROR: Invalid offset op %d\n", op);
+                        failed = 1;
+                    }else{
+                        ment->offs = i;
+                        ment->op = op;
+                    }
+                    break;
+                case 43: /* OpConstant */
+                case 54: /* OpFunction */
+                case 59: /* OpVariable */
+                    ment = calc_ent(intr, ir[i+2]);
+                    if(! ment){
+                        printf("ERROR: Invalid offset op %d\n", op);
+                        failed = 1;
+                    }else{
+                        ment->offs = i;
+                        ment->op = op;
+                    }
+                    break;
+
+                /* Decorations */
+                case 71: /* OpDecorate */
+                    ment = calc_ent(intr, ir[i+1]);
+                    if(! ment){
+                        printf("ERROR: Invalid offset op %d\n", op);
+                        failed = 1;
+                    }else{
+                        prev = ment->chain;
+                        intr->chain[i] = prev;
+                        ment->chain = i;
+                    }
+                    break;
+                case 72: /* OpMemberDecorate */
+                    printf("!!! FIXME !!! OpMemberDecorate.!\n");
+                    break;
+                default:
+                    /* Do nothing, skip insn */
+                    break;
+            }
             i+=oplen;
         }
+    }else{
+        free(intr->chain);
+        free(intr);
     }
-    if(out_count){
-        *out_count = bound;
+    if(failed){
+        intr = NULL;
     }
-    return ent;
+    return intr;
 }
 

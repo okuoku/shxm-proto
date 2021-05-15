@@ -75,17 +75,24 @@ struct shxm_program_s {
 };
 
 struct shxm_spirv_ent_s {
-    int offs;
+    int offs; /* Location */
     int op;
-    int type;
-    int name;
-    char* str;
+    int name; /* OpName location */
+    int chain; /* Decoration chain start location */
 };
 
 typedef struct shxm_spirv_ent_s shxm_spirv_ent_t;
 
-shxm_spirv_ent_t* shxm_private_read_spirv(uint32_t* ir, int len, 
-                                          int* out_count);
+struct shxm_spirv_intr_s {
+    unsigned int* chain;
+    shxm_spirv_ent_t* ent;
+    unsigned int ent_count;
+    unsigned int chain_count;
+};
+
+typedef struct shxm_spirv_intr_s shxm_spirv_intr_t;
+
+shxm_spirv_intr_t* shxm_private_read_spirv(uint32_t* ir, int len);
 
 // {
 #ifdef __cplusplus
