@@ -32,9 +32,9 @@ main(int ac, char** av){
     ctx = shxm_init();
     shf = shxm_shader_create(ctx, SHXM_SHADER_STAGE_FRAGMENT);
     shv = shxm_shader_create(ctx, SHXM_SHADER_STAGE_VERTEX);
-    src = readfile(SOURCEPATH "/phys.frag", &len);
+    src = readfile(SOURCEPATH "/simple.frag", &len);
     shxm_shader_source(ctx, shf, src, len);
-    src = readfile(SOURCEPATH "/phys.vert", &len);
+    src = readfile(SOURCEPATH "/simple.vert", &len);
     shxm_shader_source(ctx, shv, src, len);
 
     printf("== FRAG ==\n");
