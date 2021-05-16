@@ -89,6 +89,7 @@ shxm_private_read_spirv(uint32_t* ir, int len){
                 case 25: /* OpTypeImage */
                 case 26: /* OpTypeSampler */
                 case 27: /* OpTypeSampledImage */
+                case 28: /* OpTypeArray */
                 case 32: /* OpTypePointer */
                 case 33: /* OpTypeFunction */
                     ment = calc_ent(intr, ir[i+1]);

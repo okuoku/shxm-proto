@@ -11,6 +11,7 @@ resolve_type(shxm_spirv_ent_t* ent, int32_t* ir, int id){
     int len;
     int offs;
     int tgt;
+    int arrlen;
     int dim;
     if(ent[id].type == CWGL_VAR_UNKNOWN){
         op = ent[id].op;
@@ -163,6 +164,37 @@ resolve_type(shxm_spirv_ent_t* ent, int32_t* ir, int id){
                     return r;
                 }
                 ent[id].type = ent[tgt].type;
+                break;
+            case 28: /* OpTypeArray */
+                /* 2: element type */
+                tgt = ir[offs+2];
+                r = resolve_type(ent, ir, tgt);
+                if(r){
+                    return r;
+                }
+                ent[id].width = ent[tgt].width;
+                ent[id].is_signed = ent[tgt].is_signed;
+                ent[id].type = ent[tgt].type;
+
+                /* 3: length */
+                arrlen = ir[offs+3];
+                if(ent[arrlen].op != 43 /* OpConstant */){
+                    printf("ERROR: Array length is not constant(%d)\n",
+                           ent[arrlen].op);
+                    return 1;
+                }
+                tgt = ir[ent[arrlen].offs+1];
+                r = resolve_type(ent, ir, tgt);
+                if(r){
+                    return r;
+                }
+                if(ent[tgt].type != CWGL_VAR_INT){
+                    printf("ERROR: Integer scalar type required for array length(%d)\n", (int)ent[tgt].type);
+                    return 1;
+                }
+                printf("FIXME: Array Index width = %d\n", ent[tgt].width);
+                ent[id].array_length = *(uint32_t*)(&ir[ent[arrlen].offs+3]);
+                printf("FIXME: Array Length = %d\n", ent[id].array_length);
                 break;
             case 32: /* OpTypePointer */
                 tgt = ir[offs+3];
