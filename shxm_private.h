@@ -12,9 +12,11 @@ struct shxm_ctx_s {
     int dummy;
 };
 
+#define SHXM_MAX_PHASE 2
 struct shxm_slot_s {
     cwgl_var_type_t type;
     const char* name;
+    int id[SHXM_MAX_PHASE];
 };
 
 typedef struct shxm_slot_s shxm_slot_t;
@@ -79,6 +81,10 @@ struct shxm_spirv_ent_s {
     int op;
     int name; /* OpName location */
     int chain; /* Decoration chain start location */
+    int width;
+    int is_signed;
+    int array_length; /* zero for non arrays */
+    cwgl_var_type_t type;
 };
 
 typedef struct shxm_spirv_ent_s shxm_spirv_ent_t;

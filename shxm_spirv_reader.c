@@ -54,7 +54,7 @@ shxm_private_read_spirv(uint32_t* ir, int len){
     if(ent){
         intr->ent = ent;
         intr->ent_count = bound;
-        memset(ent, 0, sizeof(shxm_spirv_ent_t*)*bound);
+        memset(ent, 0, sizeof(shxm_spirv_ent_t)*bound);
         memset(intr->chain, 0, sizeof(unsigned int)*len);
         i = 5;
         while(i<len){
@@ -69,6 +69,7 @@ shxm_private_read_spirv(uint32_t* ir, int len){
                 case 5: /* OpName */
                     ment = calc_ent(intr, ir[i+1]);
                     if(! ment){
+                        printf("ERROR: Invalid offset op %d\n", op);
                         failed = 1;
                     }else{
                         ment->name = i;
@@ -133,6 +134,7 @@ shxm_private_read_spirv(uint32_t* ir, int len){
             i+=oplen;
         }
     }else{
+        printf("ERROR: Insufficient memory?? (%d)\n", bound);
         free(intr->chain);
         free(intr);
     }
