@@ -217,7 +217,8 @@ fill_slots(shxm_program_t* prog, shxm_spirv_intr_t* intr, int phase){
             if(intr->ent[id].name){
                 varname = (char*)&ir[intr->ent[id].name+2];
             }else{
-                varname = NULL;
+                /* Unnamed variable can be safely ignored */
+                continue;
             }
             varusage = UNKNOWN;
             varclass = ir[intr->ent[id].offs+3];
@@ -236,8 +237,8 @@ fill_slots(shxm_program_t* prog, shxm_spirv_intr_t* intr, int phase){
                     varusage = OUTPUT;
                     break;
                 default:
-                    /* Unknown */
-                    break;
+                    /* Unknown, ignore */
+                    continue;
             }
 
             if(phase == 0){
