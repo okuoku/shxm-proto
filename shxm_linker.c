@@ -95,6 +95,10 @@ resolve_type(shxm_spirv_ent_t* ent, int32_t* ir, int id){
                 ent[id].array_length = 0;
                 ent[id].width = 0;
                 ent[id].is_signed = 0;
+                r = resolve_type(ent, ir, tgt);
+                if(r){
+                    return r;
+                }
                 switch(len){
                     case 2:
                         if(ent[tgt].type != CWGL_VAR_FLOAT_VEC2){
