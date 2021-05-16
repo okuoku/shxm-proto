@@ -6,7 +6,7 @@
 #include <stdlib.h>
 
 namespace glslang {
-    extern TBuiltInResource DefaultTBuiltInResource;
+    extern const TBuiltInResource DefaultTBuiltInResource;
 };
 
 extern "C" void
