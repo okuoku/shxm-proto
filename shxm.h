@@ -10,6 +10,9 @@ extern "C" {
 
 // FIXME: Move to CWGL
 enum cwgl_var_type_e {
+    /* Init */
+    CWGL_VAR_UNKNOWN = 0,
+
     /* Scalar */
     CWGL_VAR_FLOAT,
     CWGL_VAR_FLOAT_VEC2,
