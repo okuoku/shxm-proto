@@ -81,6 +81,7 @@ shxm_private_read_spirv(uint32_t* ir, int len){
 
                 /* Types */
                 case 19: /* OpTypeVoid */
+                case 20: /* OpTypeBool */
                 case 21: /* OpTypeInt */
                 case 22: /* OpTypeFloat */
                 case 23: /* OpTypeVector */

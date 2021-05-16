@@ -19,6 +19,12 @@ resolve_type(shxm_spirv_ent_t* ent, int32_t* ir, int id){
             case 19: /* OpTypeVoid */
                 ent[id].type = CWGL_VAR_DUMMY;
                 break;
+            case 20: /* OpTypeBool */
+                ent[id].type = CWGL_VAR_BOOL;
+                ent[id].array_length = 0;
+                ent[id].width = 0;
+                ent[id].is_signed = 0;
+                break;
             case 21: /* OpTypeInt */
                 ent[id].type = CWGL_VAR_INT;
                 ent[id].array_length = 0;
