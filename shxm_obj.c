@@ -27,10 +27,10 @@ shxm_init(void){
 SHXM_API shxm_shader_t* 
 shxm_shader_create(shxm_ctx_t* ctx, shxm_shader_stage_t type){
     shxm_shader_t* shader;
-    shader = malloc(sizeof(shxm_shader_t*));
+    shader = malloc(sizeof(shxm_shader_t));
     if(shader){
         // Assume NULL is zero
-        memset(shader, 0, sizeof(shader));
+        memset(shader, 0, sizeof(shxm_shader_t));
         shader->refcnt = 1;
         shader->type = type;
     }
@@ -56,10 +56,10 @@ shxm_shader_release(shxm_ctx_t* ctx, shxm_shader_t* sh){
 SHXM_API shxm_program_t* 
 shxm_program_create(shxm_ctx_t* ctx){
     shxm_program_t* program;
-    program = malloc(sizeof(program));
+    program = malloc(sizeof(shxm_program_t));
     if(program){
         // Assume NULL is zero
-        memset(program, 0, sizeof(program));
+        memset(program, 0, sizeof(shxm_program_t));
     }
     return program;
 }
