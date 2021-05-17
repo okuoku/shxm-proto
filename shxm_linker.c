@@ -223,13 +223,7 @@ fill_slots(shxm_program_t* prog, shxm_spirv_intr_t* intr, int phase){
     /* Look for OpVariable Input/Output/Uniform/UniformConstant */
     int id;
     int failed = 0;
-    enum {
-        UNKNOWN,
-        INPUT,
-        OUTPUT,
-        UNIFORM,
-        UNIFORM_CONSTANT
-    } varusage;
+    shxm_varusage_t varusage;
     char* varname;
     int varclass;
     int varwidth;
@@ -247,7 +241,6 @@ fill_slots(shxm_program_t* prog, shxm_spirv_intr_t* intr, int phase){
         prog->attribute_count = 0;
         prog->varying_count = 0;
     }
-    /* Pass1: Pickup variable decl. */
     for(id=0;id!=intr->ent_count;id++){
         if(intr->ent[id].op == 59 /* OpVariable */){
             if(intr->ent[id].name){
@@ -299,6 +292,7 @@ fill_slots(shxm_program_t* prog, shxm_spirv_intr_t* intr, int phase){
             if(varslot){
                 typeid = ir[intr->ent[id].offs+1];
                 varslot->id[phase] = id;
+                intr->ent[id].varusage = varusage;
                 varslot->name = varname;
                 r = resolve_type(intr->ent, ir, typeid);
                 if(r){
@@ -312,14 +306,115 @@ fill_slots(shxm_program_t* prog, shxm_spirv_intr_t* intr, int phase){
             }
         }
     }
-    /* Pass2: Resolve type and decoration chain */
-    for(v=0;v!=prog->slot_count;v++){
-    }
     return failed;
+}
+
+static void
+add_attribute(shxm_program_t* prog, shxm_slot_t* slot){
+    prog->attribute[prog->attribute_count].slot = slot;
+    prog->attribute_count++;
+}
+
+static void
+add_varying(shxm_program_t* prog, shxm_slot_t* slot){
+    prog->varying[prog->varying_count].slot = slot;
+    prog->varying_count++;
+}
+
+static void
+add_uniform(shxm_program_t* prog, shxm_slot_t* slot){
+    prog->uniform[prog->uniform_count].slot = slot;
+    prog->uniform_count++;
+}
+
+static int
+linkup_slots(shxm_program_t* prog, shxm_spirv_intr_t* vintr,
+             shxm_spirv_intr_t* fintr){
+    int s;
+    int vid, fid;
+    shxm_slot_t* slot;
+    for(s=0;s!=prog->slot_count;s++){
+        slot = &prog->slot[s];
+        vid = slot->id[0];
+        fid = slot->id[1];
+        /* Generate field table */
+        if(vid && fid){
+            /* On both fragment shader and vertex shader */
+            switch(vintr->ent[vid].varusage){
+                case OUTPUT: /* varying */
+                    if(fintr->ent[fid].varusage != INPUT){
+                        printf("ERROR: fs %s expected INPUT(%d)\n",
+                               slot->name, fintr->ent[fid].varusage);
+                        return 1;
+                    }
+                    // FIXME: Check type here.
+                    add_varying(prog, slot);
+                    break;
+                case UNIFORM_CONSTANT: /* uniform */
+                    if(fintr->ent[fid].varusage != UNIFORM_CONSTANT){
+                        printf("ERROR: fs %s expected UNIFORM_CONSTANT(%d)\n",
+                               slot->name, fintr->ent[fid].varusage);
+                        return 1;
+                    }
+                    // FIXME: Check type here.
+                    add_uniform(prog, slot);
+                    break;
+                default:
+                case INPUT:
+                case UNKNOWN:
+                case UNIFORM:
+                    printf("ERROR: vs %s Invalid varusage(%d)\n",
+                           slot->name, vintr->ent[vid].varusage);
+                    return 1;
+            }
+        }else if(vid){
+            /* Vertex shader only */
+            switch(vintr->ent[vid].varusage){
+                case OUTPUT:
+                    add_varying(prog, slot);
+                    break;
+                case UNIFORM_CONSTANT:
+                    add_uniform(prog, slot);
+                    break;
+                case INPUT:
+                    add_attribute(prog, slot);
+                    break;
+                default:
+                case UNKNOWN:
+                case UNIFORM:
+                    printf("ERROR: vs %s Invalid varusage(%d)\n",
+                           slot->name, vintr->ent[vid].varusage);
+                    return 1;
+            }
+        }else if(fid){
+            /* Fragment shader only */
+            switch(fintr->ent[fid].varusage){
+                case INPUT:
+                case OUTPUT:
+                    // FIXME: Implement builtin
+                    break;
+                case UNIFORM_CONSTANT:
+                    add_uniform(prog, slot);
+                    break;
+                default:
+                case UNKNOWN:
+                case UNIFORM:
+                    printf("ERROR: fs %s Invalid varusage(%d)\n",
+                           slot->name, vintr->ent[vid].varusage);
+                    return 1;
+            }
+        }else{
+            printf("ERROR: Unknown field usage[%s]\n",
+                   slot->name);
+            return 1;
+        }
+    }
+    return 0;
 }
 
 SHXM_API int
 shxm_program_link(shxm_ctx_t* ctx, shxm_program_t* prog){
+    int i;
     shxm_spirv_intr_t* vintr;
     shxm_spirv_intr_t* fintr;
 
@@ -354,6 +449,27 @@ shxm_program_link(shxm_ctx_t* ctx, shxm_program_t* prog){
         printf("ERROR: Failed to fill fragment shader variable slots.\n");
         // FIXME: Release vintr, fintr
         return 1;
+    }
+    if(linkup_slots(prog, vintr, fintr)){
+        // FIXME: Release vintr, fintr
+        return 1;
+    }
+
+    printf("== PostLink ==\n");
+    for(i=0;i!=prog->uniform_count;i++){
+        printf("Uniform__:%s:%d:%d\n",prog->uniform[i].slot->name,
+               prog->uniform[i].slot->id[0],
+               prog->uniform[i].slot->id[1]);
+    }
+    for(i=0;i!=prog->attribute_count;i++){
+        printf("Attribute:%s:%d:%d\n",prog->attribute[i].slot->name,
+               prog->attribute[i].slot->id[0],
+               prog->attribute[i].slot->id[1]);
+    }
+    for(i=0;i!=prog->varying_count;i++){
+        printf("Varying__:%s:%d:%d\n",prog->varying[i].slot->name,
+               prog->varying[i].slot->id[0],
+               prog->varying[i].slot->id[1]);
     }
 
     // FIXME: Implement this.

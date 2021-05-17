@@ -76,14 +76,25 @@ struct shxm_program_s {
     unsigned int fragment_ir_len;
 };
 
+enum shxm_varusage_e {
+    UNKNOWN,
+    INPUT,
+    OUTPUT,
+    UNIFORM,
+    UNIFORM_CONSTANT
+};
+
+typedef enum shxm_varusage_e shxm_varusage_t;
+
 struct shxm_spirv_ent_s {
-    int offs; /* Location */
+    int offs; /* SPIR-V Location */
     int op;
     int name; /* OpName location */
     int chain; /* Decoration chain start location */
     int width;
     int is_signed;
     int array_length; /* zero for non arrays */
+    shxm_varusage_t varusage;
     cwgl_var_type_t type;
 };
 
