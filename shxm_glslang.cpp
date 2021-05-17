@@ -37,7 +37,7 @@ shxm_glslang_build(int mode, const char* source,
     }
 
     ts->setStrings(&source, 1);
-    ts->setAutoMapBindings(true);
+    //ts->setAutoMapBindings(true);
     ts->setAutoMapLocations(true);
     // ts->setInvertY(true);
     ts->setEnvInput(glslang::EShSourceGlsl,
