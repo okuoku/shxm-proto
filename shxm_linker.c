@@ -421,6 +421,84 @@ linkup_slots(shxm_program_t* prog, shxm_spirv_intr_t* vintr,
     return 0;
 }
 
+static int
+is_builtin(shxm_slot_t* slot){
+    // FIXME: Tentative. Use var decoration instead
+#define CHECK(nam) \
+    if(slot->name && (! strncmp(slot->name, nam, sizeof(nam)+1))) return 1
+    CHECK("gl_Position");
+    CHECK("gl_PointSize");
+    CHECK("gl_VertexID");
+    CHECK("gl_InstanceID");
+    CHECK("gl_FragCood");
+    CHECK("gl_PointCood");
+    CHECK("gl_FrontFacing");
+    CHECK("gl_FragDepth");
+    CHECK("gl_FragColor");
+    CHECK("gl_FragData");
+    return 0;
+#undef CHECK
+}
+
+static int
+assign_locations(shxm_program_t* prog){
+    int i;
+    int curloc;
+    curloc = 0;
+    shxm_slot_t* slot;
+    shxm_attribute_t* attr;
+    for(i=0;i!=prog->input_count;i++){
+        attr = &prog->input[i];
+        slot = attr->slot;
+        if(is_builtin(slot)){
+            // FIXME: Validate I/O here
+            attr->location = SHXM_LOCATION_BUILTIN;
+        }else{
+            // FIXME: Validate I/O here
+            attr->location = curloc;
+            // FIXME: Calc occpied location size here.
+            curloc++;
+        }
+    }
+    curloc = 0;
+    for(i=0;i!=prog->varying_count;i++){
+        attr = &prog->varying[i];
+        slot = attr->slot;
+        if(is_builtin(slot)){
+            // FIXME: Validate I/O here
+            attr->location = SHXM_LOCATION_BUILTIN;
+        }else{
+            // FIXME: Validate I/O here
+            attr->location = curloc;
+            // FIXME: Calc occpied location size here.
+            curloc++;
+        }
+    }
+    curloc = 0;
+    for(i=0;i!=prog->output_count;i++){
+        attr = &prog->output[i];
+        slot = attr->slot;
+        if(is_builtin(slot)){
+            // FIXME: Validate I/O here
+            attr->location = SHXM_LOCATION_BUILTIN;
+        }else{
+            // FIXME: Validate I/O here
+            attr->location = curloc;
+            // FIXME: Calc occpied location size here.
+            curloc++;
+        }
+    }
+    return 0;
+}
+
+static int
+layout_uniforms(shxm_program_t* prog){
+    int i;
+    for(i=0;i!=prog->uniform_count;i++){
+    }
+    return 0;
+}
+
 SHXM_API int
 shxm_program_link(shxm_ctx_t* ctx, shxm_program_t* prog){
     int i;
@@ -464,6 +542,16 @@ shxm_program_link(shxm_ctx_t* ctx, shxm_program_t* prog){
         return 1;
     }
 
+    if(assign_locations(prog)){
+        // FIXME: Release vintr, fintr
+        return 1;
+    }
+
+    if(layout_uniforms(prog)){
+        // FIXME: Release vintr, fintr
+        return 1;
+    }
+
     printf("== PostLink ==\n");
     for(i=0;i!=prog->uniform_count;i++){
         printf("Uniform:%s:%d:%d\n",prog->uniform[i].slot->name,
@@ -471,19 +559,19 @@ shxm_program_link(shxm_ctx_t* ctx, shxm_program_t* prog){
                prog->uniform[i].slot->id[1]);
     }
     for(i=0;i!=prog->input_count;i++){
-        printf("Input__:%s:%d:%d\n",prog->input[i].slot->name,
+        printf("Input__:%s:%d:%d (loc %d)\n",prog->input[i].slot->name,
                prog->input[i].slot->id[0],
-               prog->input[i].slot->id[1]);
+               prog->input[i].slot->id[1], prog->input[i].location);
     }
     for(i=0;i!=prog->varying_count;i++){
-        printf("Varying:%s:%d:%d\n",prog->varying[i].slot->name,
+        printf("Varying:%s:%d:%d (loc %d)\n",prog->varying[i].slot->name,
                prog->varying[i].slot->id[0],
-               prog->varying[i].slot->id[1]);
+               prog->varying[i].slot->id[1], prog->varying[i].location);
     }
     for(i=0;i!=prog->output_count;i++){
-        printf("Output_:%s:%d:%d\n",prog->output[i].slot->name,
+        printf("Output_:%s:%d:%d (loc %d)\n",prog->output[i].slot->name,
                prog->output[i].slot->id[0],
-               prog->output[i].slot->id[1]);
+               prog->output[i].slot->id[1], prog->output[i].location);
     }
 
     // FIXME: Implement this.
