@@ -29,17 +29,13 @@ struct shxm_uniform_s {
 
 typedef struct shxm_uniform_s shxm_uniform_t;
 
+#define SHXM_LOCATION_BUILTIN -1
 struct shxm_attribute_s {
     shxm_slot_t* slot;
+    int location;
 };
 
 typedef struct shxm_attribute_s shxm_attribute_t;
-
-struct shxm_varying_s {
-    shxm_slot_t* slot;
-};
-
-typedef struct shxm_varying_s shxm_varying_t;
 
 struct shxm_shader_s {
     int refcnt;
@@ -52,7 +48,8 @@ struct shxm_shader_s {
 typedef struct shxm_shader_s shxm_shader_t;
 
 #define SHXM_MAX_SLOTS 512
-#define SHXM_MAX_ATTRIBUTES 256
+#define SHXM_MAX_INPUTS 256
+#define SHXM_MAX_OUTPUTS 256
 #define SHXM_MAX_VARYINGS 256
 #define SHXM_MAX_UNIFORMS 256
 struct shxm_program_s {
@@ -65,9 +62,11 @@ struct shxm_program_s {
     unsigned int slot_count;
     shxm_uniform_t uniform[SHXM_MAX_UNIFORMS];
     unsigned int uniform_count;
-    shxm_attribute_t attribute[SHXM_MAX_ATTRIBUTES];
-    unsigned int attribute_count;
-    shxm_varying_t varying[SHXM_MAX_VARYINGS];
+    shxm_attribute_t input[SHXM_MAX_INPUTS];
+    unsigned int input_count;
+    shxm_attribute_t output[SHXM_MAX_OUTPUTS];
+    unsigned int output_count;
+    shxm_attribute_t varying[SHXM_MAX_VARYINGS];
     unsigned int varying_count;
 
     uint32_t* vertex_ir;

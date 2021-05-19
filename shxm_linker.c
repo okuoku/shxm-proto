@@ -238,7 +238,8 @@ fill_slots(shxm_program_t* prog, shxm_spirv_intr_t* intr, int phase){
         /* Reset current slot data */
         prog->slot_count = 0;
         prog->uniform_count = 0;
-        prog->attribute_count = 0;
+        prog->input_count = 0;
+        prog->output_count = 0;
         prog->varying_count = 0;
     }
     for(id=0;id!=intr->ent_count;id++){
@@ -310,11 +311,15 @@ fill_slots(shxm_program_t* prog, shxm_spirv_intr_t* intr, int phase){
 }
 
 static void
-add_attribute(shxm_program_t* prog, shxm_slot_t* slot){
-    prog->attribute[prog->attribute_count].slot = slot;
-    prog->attribute_count++;
+add_input(shxm_program_t* prog, shxm_slot_t* slot){
+    prog->input[prog->input_count].slot = slot;
+    prog->input_count++;
 }
-
+static void
+add_output(shxm_program_t* prog, shxm_slot_t* slot){
+    prog->output[prog->output_count].slot = slot;
+    prog->output_count++;
+}
 static void
 add_varying(shxm_program_t* prog, shxm_slot_t* slot){
     prog->varying[prog->varying_count].slot = slot;
@@ -377,7 +382,7 @@ linkup_slots(shxm_program_t* prog, shxm_spirv_intr_t* vintr,
                     add_uniform(prog, slot);
                     break;
                 case INPUT:
-                    add_attribute(prog, slot);
+                    add_input(prog, slot);
                     break;
                 default:
                 case UNKNOWN:
@@ -390,8 +395,12 @@ linkup_slots(shxm_program_t* prog, shxm_spirv_intr_t* vintr,
             /* Fragment shader only */
             switch(fintr->ent[fid].varusage){
                 case INPUT:
+                    // FIXME: Implement builtin
+                    add_input(prog,slot);
+                    break;
                 case OUTPUT:
                     // FIXME: Implement builtin
+                    add_output(prog,slot);
                     break;
                 case UNIFORM_CONSTANT:
                     add_uniform(prog, slot);
@@ -457,19 +466,24 @@ shxm_program_link(shxm_ctx_t* ctx, shxm_program_t* prog){
 
     printf("== PostLink ==\n");
     for(i=0;i!=prog->uniform_count;i++){
-        printf("Uniform__:%s:%d:%d\n",prog->uniform[i].slot->name,
+        printf("Uniform:%s:%d:%d\n",prog->uniform[i].slot->name,
                prog->uniform[i].slot->id[0],
                prog->uniform[i].slot->id[1]);
     }
-    for(i=0;i!=prog->attribute_count;i++){
-        printf("Attribute:%s:%d:%d\n",prog->attribute[i].slot->name,
-               prog->attribute[i].slot->id[0],
-               prog->attribute[i].slot->id[1]);
+    for(i=0;i!=prog->input_count;i++){
+        printf("Input__:%s:%d:%d\n",prog->input[i].slot->name,
+               prog->input[i].slot->id[0],
+               prog->input[i].slot->id[1]);
     }
     for(i=0;i!=prog->varying_count;i++){
-        printf("Varying__:%s:%d:%d\n",prog->varying[i].slot->name,
+        printf("Varying:%s:%d:%d\n",prog->varying[i].slot->name,
                prog->varying[i].slot->id[0],
                prog->varying[i].slot->id[1]);
+    }
+    for(i=0;i!=prog->output_count;i++){
+        printf("Output_:%s:%d:%d\n",prog->output[i].slot->name,
+               prog->output[i].slot->id[0],
+               prog->output[i].slot->id[1]);
     }
 
     // FIXME: Implement this.
