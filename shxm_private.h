@@ -52,6 +52,7 @@ typedef struct shxm_shader_s shxm_shader_t;
 #define SHXM_MAX_OUTPUTS 256
 #define SHXM_MAX_VARYINGS 256
 #define SHXM_MAX_UNIFORMS 256
+#define SHXM_MAX_UNUSED 256
 struct shxm_program_s {
     /* Pre-link fields */
     shxm_shader_t* vertex_shader;
@@ -68,6 +69,8 @@ struct shxm_program_s {
     unsigned int output_count;
     shxm_attribute_t varying[SHXM_MAX_VARYINGS];
     unsigned int varying_count;
+    shxm_attribute_t unused[SHXM_MAX_UNUSED];
+    unsigned int unused_count;
 
     uint32_t* vertex_ir;
     unsigned int vertex_ir_len;
