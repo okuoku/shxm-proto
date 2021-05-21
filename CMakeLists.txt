@@ -6,7 +6,10 @@ set(ENABLE_GLSLANG_BINARIES OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(glslang)
 
-include_directories(glslang/glslang/Public glslang)
+include_directories(glslang/glslang/Public glslang
+    yuniframe/include
+    yuniframe/shxm/src
+    )
 
 add_definitions(-DSOURCEPATH=\"${CMAKE_CURRENT_LIST_DIR}\")
 
@@ -15,10 +18,10 @@ add_executable(check
     glslang/StandAlone/ResourceLimits.cpp
     glslang/StandAlone/resource_limits_c.cpp
     # main
-    shxm_glslang.cpp
-    shxm_obj.c
-    shxm_linker.c
-    shxm_spirv_reader.c
+    yuniframe/shxm/src/shxm_glslang.cpp
+    yuniframe/shxm/src/shxm_obj.c
+    yuniframe/shxm/src/shxm_linker.c
+    yuniframe/shxm/src/shxm_spirv_reader.c
     driver.c
     )
 
