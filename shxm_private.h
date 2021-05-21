@@ -17,6 +17,8 @@ struct shxm_slot_s {
     cwgl_var_type_t type;
     const char* name;
     int id[SHXM_MAX_PHASE];
+    // FIXME: Signedness for WebGL2
+    int array_length; /* zero for non arrays */
 };
 
 typedef struct shxm_slot_s shxm_slot_t;

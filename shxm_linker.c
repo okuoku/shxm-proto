@@ -296,6 +296,7 @@ fill_slots(shxm_program_t* prog, shxm_spirv_intr_t* intr, int phase){
                 varslot->id[phase] = id;
                 intr->ent[id].varusage = varusage;
                 varslot->name = varname;
+                varslot->array_length = intr->ent[id].array_length;
                 r = resolve_type(intr->ent, ir, typeid);
                 if(r){
                     return r;
@@ -448,16 +449,27 @@ linkup_slots(shxm_program_t* prog, shxm_spirv_intr_t* vintr,
 }
 
 static int /* count */
-calc_location_size(cwgl_var_type_t type){
-    switch(type){
+calc_location_size(shxm_slot_t* slot){
+    cwgl_var_type_t type;
+    int locsize;
+    switch(slot->type){
         case CWGL_VAR_FLOAT_MAT2:
-            return 2;
+            locsize = 2;
+            break;
         case CWGL_VAR_FLOAT_MAT3:
-            return 3;
+            locsize = 3;
+            break;
         case CWGL_VAR_FLOAT_MAT4:
-            return 4;
+            locsize = 4;
+            break;
         default:
-            return 1;
+            locsize = 1;
+            break;
+    }
+    if(slot->array_length){
+        return locsize * slot->array_length;
+    }else{
+        return locsize;
     }
 }
 
@@ -476,7 +488,7 @@ assign_locations(shxm_program_t* prog){
             attr->location = SHXM_LOCATION_BUILTIN;
         }else{
             attr->location = curloc;
-            curloc += calc_location_size(slot->type);
+            curloc += calc_location_size(slot);
         }
     }
 
@@ -488,7 +500,7 @@ assign_locations(shxm_program_t* prog){
             attr->location = SHXM_LOCATION_BUILTIN;
         }else{
             attr->location = curloc;
-            curloc += calc_location_size(slot->type);
+            curloc += calc_location_size(slot);
         }
     }
 
@@ -500,16 +512,118 @@ assign_locations(shxm_program_t* prog){
             attr->location = SHXM_LOCATION_BUILTIN;
         }else{
             attr->location = curloc;
-            curloc += calc_location_size(slot->type);
+            curloc += calc_location_size(slot);
         }
     }
     return 0;
 }
 
 static int
+calc_slot_size(shxm_slot_t* slot){
+    int locsize;
+    switch(slot->type){
+        case CWGL_VAR_FLOAT_VEC2:
+        case CWGL_VAR_INT_VEC2:
+        case CWGL_VAR_BOOL_VEC2:
+            locsize = 2;
+            break;
+        case CWGL_VAR_FLOAT_VEC3:
+        case CWGL_VAR_INT_VEC3:
+        case CWGL_VAR_BOOL_VEC3:
+            locsize = 3;
+            break;
+        case CWGL_VAR_FLOAT_VEC4:
+        case CWGL_VAR_INT_VEC4:
+        case CWGL_VAR_BOOL_VEC4:
+            locsize = 4;
+            break;
+        case CWGL_VAR_FLOAT_MAT2:
+            locsize = 2*2;
+            break;
+        case CWGL_VAR_FLOAT_MAT3:
+            locsize = 3*3;
+            break;
+        case CWGL_VAR_FLOAT_MAT4:
+            locsize = 4*4;
+            break;
+        case CWGL_VAR_FLOAT:
+        case CWGL_VAR_INT:
+        case CWGL_VAR_BOOL:
+        default:
+            locsize = 1;
+            break;
+    }
+    if(slot->array_length){
+        return locsize * slot->array_length * 4;
+    }else{
+        return locsize * 4;
+    }
+}
+
+static int
+calc_slot_alignment(shxm_slot_t* slot){
+    int locsize;
+    if(slot->array_length){
+        /* Arrays will have 4 component alignment in std140
+         * ref: GLES3 2.12.6.4 Standard Uniform Block Layout */
+        locsize = 4;
+    }else{
+        switch(slot->type){
+            case CWGL_VAR_FLOAT_VEC2:
+            case CWGL_VAR_INT_VEC2:
+            case CWGL_VAR_BOOL_VEC2:
+                locsize = 2;
+                break;
+            case CWGL_VAR_FLOAT_VEC3:
+            case CWGL_VAR_INT_VEC3:
+            case CWGL_VAR_BOOL_VEC3:
+            case CWGL_VAR_FLOAT_VEC4:
+            case CWGL_VAR_INT_VEC4:
+            case CWGL_VAR_BOOL_VEC4:
+                /* VEC3 will have 4 component alignment in std140
+                 * ref: GLES3 2.12.6.4 Standard Uniform Block Layout */
+                locsize = 4;
+                break;
+            case CWGL_VAR_FLOAT_MAT2:
+            case CWGL_VAR_FLOAT_MAT4:
+            case CWGL_VAR_FLOAT_MAT3:
+                /* Matrix have 4 component alignment in std140
+                 * ref: GLES3 2.12.6.4 Standard Uniform Block Layout */
+                locsize = 4;
+                break;
+            case CWGL_VAR_FLOAT:
+            case CWGL_VAR_INT:
+            case CWGL_VAR_BOOL:
+            default:
+                locsize = 1;
+                break;
+        }
+    }
+    /* Convert it into bytes */
+    return locsize * 4;
+}
+
+static int
 layout_uniforms(shxm_program_t* prog){
     int i;
+    int curoff;
+    int alignment;
+    int size;
+    int d,nd;
+    shxm_slot_t* slot;
+    curoff = 0;
     for(i=0;i!=prog->uniform_count;i++){
+        slot = prog->uniform[i].slot;
+        alignment = calc_slot_alignment(slot);
+        size = calc_slot_size(slot);
+        d = curoff / alignment;
+        nd = alignment * d;
+        if(nd != curoff){
+            curoff = alignment * (d+1);
+        }
+        prog->uniform[i].offset = curoff;
+        prog->uniform[i].size = size;
+        curoff += size;
     }
     return 0;
 }
@@ -569,9 +683,11 @@ shxm_program_link(shxm_ctx_t* ctx, shxm_program_t* prog){
 
     printf("== PostLink ==\n");
     for(i=0;i!=prog->uniform_count;i++){
-        printf("Uniform:%s:%d:%d\n",prog->uniform[i].slot->name,
+        printf("Uniform:%s:%d:%d (off: %d, size: %d)\n",
+               prog->uniform[i].slot->name,
                prog->uniform[i].slot->id[0],
-               prog->uniform[i].slot->id[1]);
+               prog->uniform[i].slot->id[1],
+               prog->uniform[i].offset, prog->uniform[i].size);
     }
     for(i=0;i!=prog->input_count;i++){
         printf("Input__:%s:%d:%d (loc %d)\n",prog->input[i].slot->name,
