@@ -6,9 +6,14 @@ set(ENABLE_GLSLANG_BINARIES OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(glslang)
 
+set(SPIRV_CROSS_CLI OFF CACHE BOOL "" FORCE)
+set(SPIRV_CROSS_SKIP_INSTALL ON CACHE BOOL "" FORCE)
+add_subdirectory(SPIRV-Cross)
+
 include_directories(glslang/glslang/Public glslang
     yuniframe/include
     yuniframe/shxm/src
+    SPIRV-Cross
     )
 
 add_definitions(-DSOURCEPATH=\"${CMAKE_CURRENT_LIST_DIR}\")
@@ -22,7 +27,10 @@ add_executable(check
     yuniframe/shxm/src/shxm_obj.c
     yuniframe/shxm/src/shxm_linker.c
     yuniframe/shxm/src/shxm_spirv_reader.c
+    yuniframe/shxm/src/shxm_spirv_discomp.c
     driver.c
     )
 
-target_link_libraries(check glslang SPIRV)
+target_link_libraries(check glslang SPIRV
+    spirv-cross-c
+    )
