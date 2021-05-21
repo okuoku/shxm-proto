@@ -16,7 +16,7 @@ readfile(const char* fn, size_t* out_size){
     r = malloc(sz+1);
     r[sz] = 0;
     fread(r, sz, 1, fp);
-    *out_size = sz+1;
+    *out_size = sz;
     return r;
 }
 
