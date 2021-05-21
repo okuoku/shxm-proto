@@ -1,3 +1,6 @@
 [submodule "glslang"]
 	path = glslang
 	url = https://github.com/KhronosGroup/glslang
+[submodule "yuniframe"]
+	path = yuniframe
+	url = https://github.com/okuoku/yuniframe.git
