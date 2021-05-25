@@ -27,7 +27,7 @@ add_executable(check
     yuniframe/shxm/src/shxm_obj.c
     yuniframe/shxm/src/shxm_linker.c
     yuniframe/shxm/src/shxm_spirv_reader.c
-    yuniframe/shxm/src/shxm_spirv_discomp.c
+    yuniframe/shxm/src/shxm_spirv_decomp.c
     driver.c
     )
 
